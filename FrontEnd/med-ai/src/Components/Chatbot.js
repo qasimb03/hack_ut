@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
 import './Chatbot.css';
+import axios from 'axios'; 
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([{ text: "Hi! How can I help you?", isBot: true }]);
   const [input, setInput] = useState("");
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     const newMessages = [...messages, { text: input, isBot: false }];
     setMessages(newMessages);
     setInput("");
 
-    setTimeout(() => {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: "I'm a chatbot! I don't have answers yet, but I'm learning.", isBot: true },
-      ]);
-    }, 1000);
+    try{
+      const response = await axios.post('https://http://localhost:3000/prompt', { message: input });
+      const defaultMessage = { text: response.data.reply, isBot: true};
+
+      setMessages((prevMessages) => [...prevMessages, defaultMessage]);
+    }catch (error){
+      console.error("Cannot fetch the default response: ", error);
+      const errorMessage = { text: "Sorry, something went wrong.", isBot: true};
+      setMessages((prevMessages) => [...prevMessages, errorMessage]);
+    }
   };
 
   return (
@@ -38,7 +43,7 @@ const Chatbot = () => {
           placeholder="Type a message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSend()}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
         <button onClick={handleSend}>Send</button>
       </div>
