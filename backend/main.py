@@ -7,6 +7,8 @@ import os
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 from dotenv import load_dotenv
+import urllib.request
+from bs4 import BeautifulSoup
 
 
 load_dotenv()
@@ -33,6 +35,7 @@ def connect_to_db():
     cursor = conn.cursor()
     global db_cursor
     db_cursor = cursor
+
 
 def create_table():
     global db_cursor
@@ -85,6 +88,8 @@ def summarize_diseases(disease_results):
     # Construct the prompt to summarize each disease in one sentence
     content_string = f"Please summarize the following diseases in 1 sentence each: {diseases_to_summarize}"
 
+    #web_links = web_search(diseases_list)
+
     completion = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[
@@ -97,7 +102,68 @@ def summarize_diseases(disease_results):
 
     response_text = completion.model_dump()['choices'][0]['message']['content']
     
+    # link_text = ""
+    # web_link_titles = list(web_links.keys())
+    # web_link_links = list(web_links.values())
+    # all_links = ""
+
+    # for i in range(len(diseases_list)):
+    #     link_text = f'\n\nLinks To Learn More About {diseases_list[i]}: {web_link_links[i]} \n' 
+    #     all_links += link_text
+
+    # print(all_links)
+
+    # response_text += all_links
     return response_text
+
+
+def web_search(disease_list):
+    results_dict = {}
+
+    for disease in disease_list:
+
+        disease = disease.replace(' ', '%20')
+        
+        url = f"https://google.com/search?q={disease}"
+
+        request = urllib.request.Request(url)
+
+        # Set a normal User Agent header, otherwise Google will block the request
+        request.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36')
+        raw_response = urllib.request.urlopen(request).read()
+
+        # Read the response as a utf-8 string
+        html = raw_response.decode("utf-8")
+
+        # Parse the HTML
+        soup = BeautifulSoup(html, 'html.parser')
+
+        # Find all the search result divs
+        divs = soup.select("#search div.g")
+        count = 0
+
+        for div in divs:
+            # Search for a h3 tag
+            results = div.select("h3")
+            if results:
+                # Extract title
+                title = results[0].get_text()
+                
+                # Extract link
+                link_tag = div.find("a", href=True)
+                if link_tag:
+                    link = link_tag['href']
+                    # Store in dictionary
+                    results_dict[title] = link
+                    count += 1
+
+                    # Stop after top 2 results
+                    if count == 1:
+                        break
+
+    # Print the results dictionary
+    # print(results_dict)
+    return results_dict
 
 
 
@@ -111,7 +177,6 @@ def prompt(search_phrase):
 
     return summarized_disease_results
 
-    # return summarized_disease_results
 
 
 
