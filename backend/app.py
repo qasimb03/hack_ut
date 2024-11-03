@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, request, jsonify
-from main import prompt  # Import the function from test.py
+from main import prompt, initialize_app  # Import the function from test.py
 
 app = Flask(__name__)
 
@@ -16,4 +16,5 @@ def process():
 
 # Run the app
 if __name__ == '__main__':
+    initialize_app()
     app.run(debug=True)
