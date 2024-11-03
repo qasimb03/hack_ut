@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import './Chatbot.css';
-import axios from 'axios'; 
+import React, { useState } from "react";
+import "./Chatbot.css";
+import axios from "axios";
 
 const Chatbot = () => {
-  const [messages, setMessages] = useState([{ text: "Hi! How can I help you?", isBot: true }]);
+  const [messages, setMessages] = useState([
+    { text: "Hi! How can I help you?", isBot: true },
+  ]);
   const [input, setInput] = useState("");
 
   const handleSend = async () => {
@@ -14,17 +16,47 @@ const Chatbot = () => {
     setInput("");
 
     try {
-      const response = await axios.post('http://localhost:3000/prompt', { message: input });
+      const response = await axios.post("http://127.0.0.1:5000/prompt", {
+        prompt: input,
+      });
+
+      const items =
+        response.data.match(/\d+\.\s\*\*.*?\*\*:.*?(?=\d+\.|$)/gs) || [];
+
       const defaultMessage = { text: response.data.reply, isBot: true };
 
-      setMessages((prevMessages) => [...prevMessages, defaultMessage]);
+      const responseMessage = {
+        text: (
+          <ol>
+            {items.map((item, index) => {
+              const [name, description] = item
+                .split(": ")
+                .map((part) => part.replace(/^\d+\.\s\*\*|\*\*/g, "").trim());
+              return (
+                <li key={index}>
+                  <strong>{name}</strong>: {description}
+                </li>
+              );
+            })}
+          </ol>
+        ),
+        isBot: true,
+      };
+
+      if (responseMessage.text) {
+        setMessages((prevMessages) => [...prevMessages, responseMessage]);
+      } else {
+        setMessages((prevMessages) => [...prevMessages, defaultMessage]);
+      }
 
       console.log("JSON Reply:", response.data);
       return response.data;
-
     } catch (error) {
       console.error("Cannot fetch the default response: ", error);
-      const errorMessage = { text: "Sorry, something went wrong.", isBot: true };
+      const errorMessage = {
+        text: "Sorry, something went wrong.",
+        isBot: true,
+      };
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
       return { error: "Error fetching response" };
     }
@@ -34,10 +66,7 @@ const Chatbot = () => {
     <div className="chatbot">
       <div className="chat-window">
         {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`message ${msg.isBot ? "bot" : "user"}`}
-          >
+          <div key={index} className={`message ${msg.isBot ? "bot" : "user"}`}>
             {msg.text}
           </div>
         ))}
