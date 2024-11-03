@@ -13,15 +13,20 @@ const Chatbot = () => {
     setMessages(newMessages);
     setInput("");
 
-    try{
-      const response = await axios.post('https://http://localhost:3000/prompt', { message: input });
-      const defaultMessage = { text: response.data.reply, isBot: true};
+    try {
+      const response = await axios.post('http://localhost:3000/prompt', { message: input });
+      const defaultMessage = { text: response.data.reply, isBot: true };
 
       setMessages((prevMessages) => [...prevMessages, defaultMessage]);
-    }catch (error){
+
+      console.log("JSON Reply:", response.data);
+      return response.data;
+
+    } catch (error) {
       console.error("Cannot fetch the default response: ", error);
-      const errorMessage = { text: "Sorry, something went wrong.", isBot: true};
+      const errorMessage = { text: "Sorry, something went wrong.", isBot: true };
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      return { error: "Error fetching response" };
     }
   };
 
