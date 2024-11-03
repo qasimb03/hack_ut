@@ -5,6 +5,12 @@ import time
 import json
 import os
 from sentence_transformers import SentenceTransformer
+from openai import OpenAI
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
 
 
 db_cursor = None
@@ -65,12 +71,49 @@ def create_model(model_name = "all-MiniLM-L6-v2"):
     model = SentenceTransformer(model_name)
     
 
+
+def summarize_diseases(disease_results):
+    diseases_list = list(disease_results.values())
+
+    client = OpenAI(
+        api_key=os.getenv('API_KEY')
+    )
+
+    
+    diseases_to_summarize = ', '.join(diseases_list[:5])
+
+    # Construct the prompt to summarize each disease in one sentence
+    content_string = f"Please summarize the following diseases in 1 sentence each: {diseases_to_summarize}"
+
+    completion = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {
+            "role": "user", 
+            "content": content_string
+        }
+    ]
+    )
+
+    response_text = completion.model_dump()['choices'][0]['message']['content']
+    
+    return response_text
+
+
+
 def prompt(search_phrase):
     global model
     # Convert search phrase into a vector
     search_vector = model.encode(search_phrase, normalize_embeddings=True).tolist() 
-    results = handle_prompt(search_vector)
-    return results
+    disease_results = handle_prompt(search_vector)
+
+    summarized_disease_results = summarize_diseases(disease_results)
+
+    return summarized_disease_results
+
+    # return summarized_disease_results
+
+
 
 def handle_prompt(search_vector):
     global db_cursor
