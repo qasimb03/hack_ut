@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, request, jsonify
-from backend.test import prompt  # Import the function from test.py
+from backend.main import prompt  # Import the function from test.py
 
 app = Flask(__name__)
 
