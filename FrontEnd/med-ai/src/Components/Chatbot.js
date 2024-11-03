@@ -58,7 +58,6 @@ const Chatbot = () => {
         isBot: true,
       };
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
-      return { error: "Error fetching response" };
     }
   };
 
@@ -67,7 +66,7 @@ const Chatbot = () => {
       <div className="chat-window">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.isBot ? "bot" : "user"}`}>
-            {msg.text}
+            <span className="message-text">{msg.text}</span>
           </div>
         ))}
       </div>
@@ -79,7 +78,7 @@ const Chatbot = () => {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
-        <button onClick={handleSend}>Send</button>
+        <button className='button' onClick={handleSend}>Send</button>
       </div>
     </div>
   );
